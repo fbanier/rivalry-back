@@ -4,15 +4,16 @@ Feature: User management
   as a user i want to create and manage an account
 
   Scenario: Creation of an account
-    Given Player "Tom" who want to create an account to compete
+    Given Player "Tom" who wants to login to his account
     When Player register email : "tom@gmail.com", username : "tom", age : "12-04-1990", and password : "tom123"
     Then Check if email "tom@gmail.com" already exist and raise an error if it does
     And Player receive an confirmation email
 
   Scenario: Login to account
-    Given Player "Tom" who want to login to his account
+    Given Player "Tom" who wants to login to his account
     When Player input email : "tom@gmail.com" and password : "tom123"
-    Then check the password with the one stores and raise an error if it doesn't
+    Then search the email in database and raise an error if not found
+    Then compare the password with the one stored and raise an error if it doesn't match
     Then the player is logged
 
   Scenario: Account Management

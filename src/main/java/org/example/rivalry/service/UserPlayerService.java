@@ -50,12 +50,12 @@ public class UserPlayerService {
         throw new AlreadyExistException("User Already Exist");
     }
 
-    public String connection (UserPlayer user){
+    public Boolean connection (UserPlayerReceiveDto user){
         List<UserPlayer> usersFound = userPlayerRepository.findByEmail(user.getUsername());
         if(!usersFound.isEmpty() && !usersFound.stream().filter(u -> u.getEmail().equals(user.getEmail())).toList().isEmpty()){
             String password = usersFound.getFirst().getPassword();
             if(Password.checkPassword(password, user.getPassword())){
-                return "user is Log:"+user;
+                return true;
             }
             throw new WrongPasswordException("Wrong Password");
         }
