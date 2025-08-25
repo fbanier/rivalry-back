@@ -5,10 +5,12 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.rivalry.dto.TournamentDto;
 import org.example.rivalry.enums.TournamentFormat;
 import org.example.rivalry.enums.TournamentStatus;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Entity
 
@@ -35,4 +37,21 @@ public class Tournament {
     private Game game;
 
     private TournamentStatus status;
+
+    private Boolean isActive;
+
+    public TournamentDto entityToDto (){
+        return TournamentDto.builder()
+                .id(getId())
+                .name(getName())
+                .description(getDescription())
+                .beginDate(getBeginDate().format(DateTimeFormatter.ofPattern("dd-MM-yyyy")))
+                .endDate(getEndDate().format(DateTimeFormatter.ofPattern("dd-MM-yyyy")))
+                .format(getFormat().toString())
+                .status(getStatus().toString())
+                .numberOfPlayers(getNumberOfPlayers())
+                .game(getGame().getId())
+                .isActive(getIsActive())
+                .build();
+    }
 }
