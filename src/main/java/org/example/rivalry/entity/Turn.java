@@ -5,6 +5,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.rivalry.dto.BracketDto;
+import org.example.rivalry.dto.TurnDto;
+import org.example.rivalry.exception.NotFoundException;
+import org.example.rivalry.repository.TournamentRepository;
 
 @Entity
 
@@ -22,4 +26,14 @@ public class Turn {
     private Bracket bracket;
 
     private Long points;
+
+    private Boolean isActive;
+
+    public TurnDto entityToDto (){
+        return TurnDto.builder()
+                .bracket(getBracket().getId())
+                .points(getPoints())
+                .isActive(getIsActive())
+                .build();
+    }
 }
