@@ -30,6 +30,8 @@ public class SecurityConfig {
                 .exceptionHandling(e-> e.authenticationEntryPoint(entryPoint))
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(r -> r.requestMatchers("/api/auth/**").permitAll().anyRequest().authenticated())
+                .authorizeHttpRequests(r -> r.requestMatchers("/api/profile/**").hasRole("PLAYER").anyRequest().authenticated())
+                .authorizeHttpRequests(r -> r.requestMatchers("/api/admin/**").hasRole("ADMIN").anyRequest().authenticated())
                 .httpBasic(c-> {});
         httpSecurity.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
         return httpSecurity.build();
