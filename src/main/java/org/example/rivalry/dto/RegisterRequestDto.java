@@ -31,4 +31,6 @@ public class RegisterRequestDto {
     private String password;
 
     private int role;
+
+    private Boolean active;
 }

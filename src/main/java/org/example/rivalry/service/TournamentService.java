@@ -39,6 +39,7 @@ public class TournamentService {
         tournament.setStatus(tournamentGet.getStatus());
         tournament.setNumberOfPlayers(tournamentGet.getNumberOfPlayers());
         tournament.setGame(tournamentGet.getGame());
+        tournament.setIsActive(tournamentGet.getIsActive());
         return tournamentRepository.save(tournament).entityToDto();
     }
 

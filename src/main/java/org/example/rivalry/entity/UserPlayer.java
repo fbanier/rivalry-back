@@ -40,11 +40,12 @@ public class UserPlayer {
 
     private Boolean isActive;
 
-    public UserPlayer(String email, String username, String password, int role) {
+    public UserPlayer(String email, String username, String password, int role, Boolean isActive) {
         this.email = email;
         this.username = username;
         this.password = password;
         this.role = role == 0 ? Roles.PLAYER : Roles.ADMIN;
+        this.isActive = isActive;
     }
 
     public UserDto entityToDto (){

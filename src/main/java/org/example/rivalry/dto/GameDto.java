@@ -1,39 +1,32 @@
-package org.example.rivalry.entity;
+package org.example.rivalry.dto;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.example.rivalry.dto.BracketDto;
-import org.example.rivalry.dto.GameDto;
-
-@Entity
+import org.example.rivalry.entity.Bracket;
+import org.example.rivalry.entity.Game;
+import org.example.rivalry.exception.NotFoundException;
+import org.example.rivalry.repository.TournamentRepository;
 
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @Data
-public class Game {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
+@Builder
+public class GameDto {
     private String title;
     private String description;
     private String image;
 
     private Boolean isActive;
 
-    public GameDto entityToDto (){
-        return GameDto.builder()
+    public Game dtoToEntity () {
+        return Game.builder()
                 .title(getTitle())
                 .description(getDescription())
                 .image(getImage())
                 .isActive(getIsActive())
                 .build();
     }
+
 }

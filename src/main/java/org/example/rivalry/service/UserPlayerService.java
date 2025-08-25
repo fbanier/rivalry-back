@@ -53,7 +53,8 @@ public class UserPlayerService {
                     registerRequestDto.getEmail(),
                     registerRequestDto.getUsername(),
                     registerRequestDto.getPassword(),
-                    0
+                    0,
+                    true
             );
             this.create(user);
             return "user Register!";
@@ -78,6 +79,7 @@ public class UserPlayerService {
         UserPlayerToUpdate.setLastName(userDto.getLastName());
         UserPlayerToUpdate.setDateOfBirth(LocalDate.parse(userDto.getDateOfBirth(), DateTimeFormatter.ofPattern("dd/MM/yyyy")));
         UserPlayerToUpdate.setAvatar(userDto.getAvatar());
+        UserPlayerToUpdate.setIsActive(userDto.getActive());
         return userPlayerRepository.save(UserPlayerToUpdate).entityToDto();
     }
 
