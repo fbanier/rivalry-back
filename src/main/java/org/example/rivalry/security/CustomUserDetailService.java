@@ -31,8 +31,8 @@ public class CustomUserDetailService implements UserDetailsService {
             UserPlayer user = userOptional.get();
             Set<GrantedAuthority> authorities = new HashSet<>();
 
-            if (user.getRole().toString().equals("PLAYER")) authorities.add(new SimpleGrantedAuthority("PLAYER"));
-            else authorities.add(new SimpleGrantedAuthority("ADMIN"));
+            if (user.getRole().toString().equals("ADMIN")) authorities.add(new SimpleGrantedAuthority("ADMIN"));
+            else authorities.add(new SimpleGrantedAuthority("PLAYER"));
 
             return new User(user.getEmail(), user.getPassword(),authorities);
         }

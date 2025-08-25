@@ -30,7 +30,5 @@ public class RegisterRequestDto {
     @Size(min = 8, message = "The password must be 8 characters minimum")
     private String password;
 
-    private int role;
-
     private Boolean active;
 }

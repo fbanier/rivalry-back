@@ -1,8 +1,8 @@
 package org.example.rivalry.service;
 
 import org.example.rivalry.dto.*;
-import org.example.rivalry.entity.Tournament;
 import org.example.rivalry.entity.UserPlayer;
+import org.example.rivalry.enums.Roles;
 import org.example.rivalry.exception.InvalidCredentials;
 import org.example.rivalry.exception.NotFoundException;
 import org.example.rivalry.exception.UserAlreadyExistException;
@@ -11,7 +11,9 @@ import org.example.rivalry.security.JWTGenerator;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -45,7 +47,7 @@ public class UserPlayerService {
         return userPlayerRepository.findAll().stream().map(UserPlayer::entityToPublicDto).toList();
     }
 
-    public String register (RegisterRequestDto registerRequestDto) throws UserAlreadyExistException{
+    public UserPlayer register (RegisterRequestDto registerRequestDto) throws UserAlreadyExistException{
         Optional<UserPlayer> userOptional = userPlayerRepository.findByEmail(registerRequestDto.getEmail());
         if(userOptional.isEmpty()){
             registerRequestDto.setPassword(passwordEncoder.encode(registerRequestDto.getPassword()));
@@ -53,21 +55,19 @@ public class UserPlayerService {
                     registerRequestDto.getEmail(),
                     registerRequestDto.getUsername(),
                     registerRequestDto.getPassword(),
-                    0,
                     true
             );
-            this.create(user);
-            return "user Register!";
+            return this.create(user);
         }
         throw new UserAlreadyExistException();
     }
 
-    public LoginResponseDto login (LoginRequestDto loginRequestDto)  throws InvalidCredentials {
+    public LoginResponseDto login (LoginRequestDto loginRequestDto) throws InvalidCredentials {
         try {
             Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequestDto.getEmail(), loginRequestDto.getPassword()));
             SecurityContextHolder.getContext().setAuthentication(authentication);
              return LoginResponseDto.builder().token(generator.generateToken(authentication)).build();
-        } catch (Exception ex) {
+        } catch (AuthenticationException ex) {
             throw new InvalidCredentials("Invalid Email or Password");
         }
     }
@@ -98,6 +98,12 @@ public class UserPlayerService {
     public void delete(Long id){
         UserPlayer user = userPlayerRepository.findById(id).orElseThrow(NotFoundException::new);
         user.setIsActive(false);
+        userPlayerRepository.save(user);
+    }
+
+    public void toAdmin(Long id){
+        UserPlayer user = userPlayerRepository.findById(id).orElseThrow(NotFoundException::new);
+        user.setRole(Roles.ADMIN);
         userPlayerRepository.save(user);
     }
 }

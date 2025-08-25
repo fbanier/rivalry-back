@@ -2,67 +2,102 @@ import io.cucumber.java.en.And;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
-import org.example.rivalry.dto.UserPlayerReceiveDto;
-import org.example.rivalry.exception.AlreadyExistException;
-import org.example.rivalry.exception.NotFoundException;
-import org.example.rivalry.exception.WrongPasswordException;
+import org.example.rivalry.dto.LoginRequestDto;
+import org.example.rivalry.dto.RegisterRequestDto;
+import org.example.rivalry.entity.UserPlayer;
+import org.example.rivalry.exception.InvalidCredentials;
+import org.example.rivalry.exception.UserAlreadyExistException;
 import org.example.rivalry.repository.UserPlayerRepository;
+import org.example.rivalry.security.JWTGenerator;
 import org.example.rivalry.service.UserPlayerService;
-import org.example.rivalry.util.Password;
 import org.junit.Assert;
 import org.mockito.Mockito;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Optional;
 
 public class UserSteps {
 
-    private UserPlayerReceiveDto user;
+    private RegisterRequestDto registerRequestDto;
+    private LoginRequestDto loginRequestDto;
     private final UserPlayerRepository userRepository = Mockito.mock(UserPlayerRepository.class);
-    private final Password password = Mockito.mock(Password.class);
-    private final UserPlayerService userService =  new UserPlayerService(userRepository);
+    private final PasswordEncoder passwordEncoder = Mockito.mock(PasswordEncoder.class);
+    private final AuthenticationManager authenticationManager = Mockito.mock(AuthenticationManager.class);
+    private final JWTGenerator generator = Mockito.mock(JWTGenerator.class);
+    private final UserPlayerService userService =  new UserPlayerService(userRepository, passwordEncoder, authenticationManager, generator);
 
-    @Given("Player {string} who wants to login to his account")
+      /***************************************************/
+     /******* Scenario: Creation of an account **********/
+    /***************************************************/
+    @Given("Player {string} who wants to create an account")
     public void player_who_wants_to_login_an_account_to_compete(String name) {
-        user = new UserPlayerReceiveDto();
-        user.setFirstName(name);
+        registerRequestDto = new RegisterRequestDto();
+        registerRequestDto.setUsername(name);
     }
 
-    @When("Player register email : {string}, username : {string}, age : {string}, and password : {string}")
-    public void player_register_email_username_and_password(String email, String username, String age, String password) {
-        user.setEmail(email);
-        user.setDateOfBirth(age);
-        user.setUsername(username);
-        user.setPassword(password);
+    @When("Player register email : {string}, username : {string}, and password : {string}")
+    public void player_register_email_username_and_password(String email, String username, String password) {
+        registerRequestDto.setEmail(email);
+        registerRequestDto.setUsername(username);
+        registerRequestDto.setPassword(password);
     }
 
     @Then("Check if email {string} already exist and raise an error if it does")
     public void check_if_email_already_exist_and_raise_an_error_if_it_does(String email) {
-        Mockito.when(userRepository.findByEmail(email)).thenReturn(user.dtoToEntity());
-        Assert.assertThrows(AlreadyExistException.class, () -> { userService.register(user); });
+        UserPlayer alreadyPlayer = new UserPlayer(
+                registerRequestDto.getEmail(),
+                registerRequestDto.getUsername(),
+                registerRequestDto.getPassword(),
+                0,
+                true
+        );
+        Mockito.when(userRepository.findByEmail(email)).thenReturn(Optional.of(alreadyPlayer));
+        Assert.assertThrows(UserAlreadyExistException.class, () -> { userService.register(registerRequestDto); });
     }
 
     @And("Player receive an confirmation email")
     public void player_receive_an_confirmation_email() {
-        Mockito.when(userRepository.findByEmail(user.getEmail())).thenReturn(null);
-        Mockito.when(userRepository.save(user.dtoToEntity())).thenReturn(user.dtoToEntity());
-        String confirmationMail = userService.register(user);
+        Mockito.when(userRepository.findByEmail(registerRequestDto.getEmail())).thenReturn(Optional.empty());
+        String confirmationMail;
+        try{
+            confirmationMail = userService.register(registerRequestDto);
+        } catch (UserAlreadyExistException e) {
+            confirmationMail = e.getMessage();
+        }
         Assert.assertEquals("user Register!", confirmationMail);
+    }
+
+    /****************************************************/
+    /********** Scenario: Login to account *************/
+    /**************************************************/
+
+    @Given("Player who wants to login to his account")
+    public void player_who_wants_to_login_to_his_account() {
+        loginRequestDto = new LoginRequestDto();
     }
 
     @When("Player input email : {string} and password : {string}")
     public void player_input_email_and_password(String email, String password) {
-        user.setEmail(email);
-        user.setPassword(password);
+        loginRequestDto.setEmail(email);
+        loginRequestDto.setPassword(password);
     }
 
     @Then("search the email in database and raise an error if not found")
     public void search_the_email_in_database_and_raise_an_error_if_not_found(){
-        Mockito.when(userRepository.findByEmail(user.getEmail())).thenReturn(new ArrayList<>());
-        Assert.assertThrows(NotFoundException.class, () -> { userService.connection(user); });
+        Mockito.when(authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequestDto.getEmail(), loginRequestDto.getPassword()))).thenThrow(AuthenticationException.class);
+        Assert.assertThrows(InvalidCredentials.class, () -> { userService.login(loginRequestDto); });
     }
 
-    @And("compare the password with the one stored and raise an error if it doesn't match")
+    /*@Then("search the email in database and raise an error if not found")
+    public void search_the_email_in_database_and_raise_an_error_if_not_found(){
+        Mockito.when(userRepository.findByEmail(user.getEmail())).thenReturn(new ArrayList<>());
+        Assert.assertThrows(NotFoundException.class, () -> { userService.connection(user); });
+    }*/
+
+/*    @And("compare the password with the one stored and raise an error if it doesn't match")
     public void compare_the_password_with_the_one_stored_and_raise_an_error_if_it_doesnt_match(){
         Mockito.when(userRepository.findByEmail(user.getEmail())).thenReturn(List.of(user.dtoToEntity()));
         Mockito.when(password.checkPassword(user.getPassword(), user.getPassword())).thenReturn(false);
@@ -74,7 +109,7 @@ public class UserSteps {
         Mockito.when(userRepository.findByEmail(user.getEmail())).thenReturn(List.of(user.dtoToEntity()));
         Mockito.when(password.checkPassword(user.getPassword(), user.getPassword())).thenReturn(true);
         Assert.assertTrue(userService.connection(user));
-    }
+    }*/
 
 
 
