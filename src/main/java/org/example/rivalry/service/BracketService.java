@@ -1,50 +1,47 @@
 package org.example.rivalry.service;
 
+import org.example.rivalry.dto.BracketDto;
 import org.example.rivalry.dto.TournamentDto;
+import org.example.rivalry.entity.Bracket;
 import org.example.rivalry.entity.Tournament;
 import org.example.rivalry.exception.NotFoundException;
+import org.example.rivalry.repository.BracketRepository;
 import org.example.rivalry.repository.GameRepository;
 import org.example.rivalry.repository.TournamentRepository;
 
 import java.util.List;
 
-public class TournamentService {
+public class BracketService {
 
+    private final BracketRepository bracketRepository;
     private final TournamentRepository tournamentRepository;
-    private final GameRepository gameRepository;
 
-    public TournamentService(TournamentRepository tournamentRepository, GameRepository gameRepository) {
+    public BracketService(BracketRepository bracketRepository, TournamentRepository tournamentRepository) {
+        this.bracketRepository = bracketRepository;
         this.tournamentRepository = tournamentRepository;
-        this.gameRepository = gameRepository;
     }
 
-    public TournamentDto create(TournamentDto tournamentDto){
-        return tournamentRepository.save(tournamentDto.dtoToEntity(gameRepository)).entityToDto();
+    public BracketDto create(BracketDto bracketDto){
+        return bracketRepository.save(bracketDto.dtoToEntity(tournamentRepository)).entityToDto();
     }
 
-    public TournamentDto get(Long id){ return tournamentRepository.findById(id).orElseThrow(NotFoundException::new).entityToDto(); }
+    public BracketDto get(Long id){ return bracketRepository.findById(id).orElseThrow(NotFoundException::new).entityToDto(); }
 
-    public List<TournamentDto> get(){
-        return tournamentRepository.findAll().stream().map(Tournament::entityToDto).toList();
+    public List<BracketDto> get(){
+        return bracketRepository.findAll().stream().map(Bracket::entityToDto).toList();
     }
 
-    public TournamentDto update(Long id, TournamentDto tournamentDto){
-        Tournament tournament = tournamentRepository.findById(id).orElseThrow(NotFoundException::new);
-        Tournament tournamentGet = tournamentDto.dtoToEntity(gameRepository);
-        tournament.setName(tournamentGet.getName());
-        tournament.setDescription(tournamentGet.getDescription());
-        tournament.setBeginDate(tournamentGet.getBeginDate());
-        tournament.setEndDate(tournamentGet.getEndDate());
-        tournament.setFormat(tournamentGet.getFormat());
-        tournament.setStatus(tournamentGet.getStatus());
-        tournament.setNumberOfPlayers(tournamentGet.getNumberOfPlayers());
-        tournament.setGame(tournamentGet.getGame());
-        return tournamentRepository.save(tournament).entityToDto();
+    public BracketDto update(Long id, BracketDto bracketDto){
+        Bracket bracket = bracketRepository.findById(id).orElseThrow(NotFoundException::new);
+        Bracket bracketGet = bracketDto.dtoToEntity(tournamentRepository);
+        bracket.setName(bracketGet.getName());
+        bracket.setTournament(bracketGet.getTournament());
+        return bracketRepository.save(bracket).entityToDto();
     }
 
     public void delete(Long id){
-        Tournament tournament = tournamentRepository.findById(id).orElseThrow(NotFoundException::new);
-        tournament.setIsActive(false);
-        tournamentRepository.save(tournament);
+        Bracket bracket = bracketRepository.findById(id).orElseThrow(NotFoundException::new);
+        bracket.setIsActive(false);
+        bracketRepository.save(bracket);
     }
 }
