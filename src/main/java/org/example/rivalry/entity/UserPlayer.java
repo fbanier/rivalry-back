@@ -38,6 +38,8 @@ public class UserPlayer {
     private Roles role;
     private String avatar;
 
+    private Boolean isActive;
+
     public UserPlayer(String email, String username, String password, int role) {
         this.email = email;
         this.username = username;
@@ -55,6 +57,7 @@ public class UserPlayer {
                 .avatar(getAvatar())
                 .dateOfBirth(getDateOfBirth().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")))
                 .dateOfCreation(getDateOfCreation().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")))
+                .active(getIsActive())
                 .build();
     }
 

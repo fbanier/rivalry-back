@@ -1,6 +1,7 @@
 package org.example.rivalry.service;
 
 import org.example.rivalry.dto.*;
+import org.example.rivalry.entity.Tournament;
 import org.example.rivalry.entity.UserPlayer;
 import org.example.rivalry.exception.InvalidCredentials;
 import org.example.rivalry.exception.NotFoundException;
@@ -92,5 +93,9 @@ public class UserPlayerService {
     }
 
 
-    public void delete(Long id){ userPlayerRepository.deleteById(id); }
+    public void delete(Long id){
+        UserPlayer user = userPlayerRepository.findById(id).orElseThrow(NotFoundException::new);
+        user.setIsActive(false);
+        userPlayerRepository.save(user);
+    }
 }

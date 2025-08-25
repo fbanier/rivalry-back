@@ -22,4 +22,6 @@ public class UserDto {
 
     private String dateOfCreation;
     private String avatar;
+
+    private Boolean active;
 }
