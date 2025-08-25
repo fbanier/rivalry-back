@@ -38,13 +38,13 @@ public class UserSteps {
 
     @Then("Check if email {string} already exist and raise an error if it does")
     public void check_if_email_already_exist_and_raise_an_error_if_it_does(String email) {
-        Mockito.when(userRepository.findByEmail(email)).thenReturn(List.of(user.dtoToEntity()));
+        Mockito.when(userRepository.findByEmail(email)).thenReturn(user.dtoToEntity());
         Assert.assertThrows(AlreadyExistException.class, () -> { userService.register(user); });
     }
 
     @And("Player receive an confirmation email")
     public void player_receive_an_confirmation_email() {
-        Mockito.when(userRepository.findByEmail(user.getEmail())).thenReturn(new ArrayList<>());
+        Mockito.when(userRepository.findByEmail(user.getEmail())).thenReturn(null);
         Mockito.when(userRepository.save(user.dtoToEntity())).thenReturn(user.dtoToEntity());
         String confirmationMail = userService.register(user);
         Assert.assertEquals("user Register!", confirmationMail);

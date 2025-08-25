@@ -5,11 +5,19 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Data
-public class UserPlayerResponseDto {
+public class UserDto {
+    private Long id;
+    private String email;
+    private String lastName;
+    private String firstName;
     private String username;
+    private String dateOfBirth;
+    private String dateOfCreation;
     private String avatar;
+
+
 }

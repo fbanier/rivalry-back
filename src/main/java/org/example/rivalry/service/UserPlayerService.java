@@ -1,83 +1,88 @@
 package org.example.rivalry.service;
 
-import org.example.rivalry.dto.UserPlayerAuthResponseDto;
-import org.example.rivalry.dto.UserPlayerReceiveDto;
-import org.example.rivalry.dto.UserPlayerResponseDto;
+import org.example.rivalry.dto.*;
 import org.example.rivalry.entity.UserPlayer;
-import org.example.rivalry.exception.AlreadyExistException;
+import org.example.rivalry.exception.InvalidCredentials;
 import org.example.rivalry.exception.NotFoundException;
-import org.example.rivalry.exception.WrongPasswordException;
+import org.example.rivalry.exception.UserAlreadyExistException;
 import org.example.rivalry.repository.UserPlayerRepository;
-import org.example.rivalry.util.Password;
+import org.example.rivalry.security.JWTGenerator;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserPlayerService {
 
     private final UserPlayerRepository userPlayerRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JWTGenerator generator;
 
-    public UserPlayerService(UserPlayerRepository userPlayerRepository) {
+    public UserPlayerService(UserPlayerRepository userPlayerRepository, PasswordEncoder passwordEncoder,AuthenticationManager authenticationManager, JWTGenerator generator ) {
         this.userPlayerRepository = userPlayerRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
+        this.generator = generator;
     }
 
-    protected UserPlayerResponseDto create(UserPlayerReceiveDto UserPlayerReceiveDto){ return userPlayerRepository.save(UserPlayerReceiveDto.dtoToEntity()).entityToPublicDto(); }
+    protected UserPlayer create(UserPlayer userPlayer){ return userPlayerRepository.save(userPlayer); }
 
-    public UserPlayerResponseDto get(Long id){ return userPlayerRepository.findById(id).orElseThrow(NotFoundException::new).entityToPublicDto(); }
+    public UserPublicDto get(Long id){ return userPlayerRepository.findById(id).orElseThrow(NotFoundException::new).entityToPublicDto(); }
 
-    public UserPlayerAuthResponseDto getAuth(Long id){ return userPlayerRepository.findById(id).orElseThrow(NotFoundException::new).entityToDto(); }
+    public UserDto getAuth(Long id){ return userPlayerRepository.findById(id).orElseThrow(NotFoundException::new).entityToDto(); }
 
-    public List<UserPlayerResponseDto> get(){
+    public List<UserPublicDto> get(){
         return userPlayerRepository.findAll().stream().map(UserPlayer::entityToPublicDto).toList();
     }
 
-    public List<UserPlayerAuthResponseDto> getAuth(){
-        return userPlayerRepository.findAll().stream().map(UserPlayer::entityToDto).toList();
-    }
-
-    public List<UserPlayerResponseDto> getByUsername(String username){
-        return null;
-    }
-
-    public String register (UserPlayerReceiveDto user){
-        List<UserPlayer> usersFound = userPlayerRepository.findByEmail(user.getEmail());
-        if(usersFound.isEmpty()){
-            user.setPassword(Password.hashPassword(user.getPassword()));
+    public String register (RegisterRequestDto registerRequestDto) throws UserAlreadyExistException{
+        Optional<UserPlayer> userOptional = userPlayerRepository.findByEmail(registerRequestDto.getEmail());
+        if(userOptional.isEmpty()){
+            registerRequestDto.setPassword(passwordEncoder.encode(registerRequestDto.getPassword()));
+            UserPlayer user = new UserPlayer(
+                    registerRequestDto.getEmail(),
+                    registerRequestDto.getUsername(),
+                    registerRequestDto.getPassword(),
+                    0
+            );
             this.create(user);
             return "user Register!";
         }
-        throw new AlreadyExistException("User Already Exist");
+        throw new UserAlreadyExistException();
     }
 
-    public Boolean connection (UserPlayerReceiveDto user){
-        List<UserPlayer> usersFound = userPlayerRepository.findByEmail(user.getUsername());
-        if(!usersFound.isEmpty() && !usersFound.stream().filter(u -> u.getEmail().equals(user.getEmail())).toList().isEmpty()){
-            String password = usersFound.getFirst().getPassword();
-            if(Password.checkPassword(password, user.getPassword())){
-                return true;
-            }
-            throw new WrongPasswordException("Wrong Password");
+    public LoginResponseDto login (LoginRequestDto loginRequestDto)  throws InvalidCredentials {
+        try {
+            Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequestDto.getEmail(), loginRequestDto.getPassword()));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+             return LoginResponseDto.builder().token(generator.generateToken(authentication)).build();
+        } catch (Exception ex) {
+            throw new InvalidCredentials("Invalid Email or Password");
         }
-        throw new NotFoundException();
     }
 
-    public UserPlayerAuthResponseDto update(Long id, UserPlayerReceiveDto UserPlayerReceiveDto){
+    public UserDto update(Long id, UserDto userDto){
         UserPlayer UserPlayerToUpdate = userPlayerRepository.findById(id).orElseThrow(NotFoundException::new);
-        UserPlayer UserPlayerGet = UserPlayerReceiveDto.dtoToEntity();
-        UserPlayerToUpdate.setEmail(UserPlayerGet.getEmail());
-        UserPlayerToUpdate.setUsername(UserPlayerGet.getUsername());
-        UserPlayerToUpdate.setFirstName(UserPlayerGet.getFirstName());
-        UserPlayerToUpdate.setLastName(UserPlayerGet.getLastName());
-        UserPlayerToUpdate.setDateOfBirth(UserPlayerGet.getDateOfBirth());
-        UserPlayerToUpdate.setAvatar(UserPlayerGet.getAvatar());
-        UserPlayerToUpdate.setRole(UserPlayerGet.getRole());
+        UserPlayerToUpdate.setUsername(userDto.getUsername());
+        UserPlayerToUpdate.setFirstName(userDto.getFirstName());
+        UserPlayerToUpdate.setLastName(userDto.getLastName());
+        UserPlayerToUpdate.setDateOfBirth(LocalDate.parse(userDto.getDateOfBirth(), DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        UserPlayerToUpdate.setAvatar(userDto.getAvatar());
         return userPlayerRepository.save(UserPlayerToUpdate).entityToDto();
     }
 
-    public boolean updatePass(Long id, UserPlayerReceiveDto UserPlayerReceiveDto){
+    public boolean updatePass(Long id, RegisterRequestDto registerRequestDto){
         UserPlayer user =  userPlayerRepository.findById(id).orElseThrow(NotFoundException::new);
-        user.setPassword(Password.hashPassword(UserPlayerReceiveDto.getPassword()));
+        user.setPassword(passwordEncoder.encode(registerRequestDto.getPassword()));
         try{
             userPlayerRepository.save(user);
         } catch (Exception e){

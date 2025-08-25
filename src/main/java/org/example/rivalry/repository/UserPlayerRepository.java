@@ -4,11 +4,9 @@ import org.example.rivalry.entity.UserPlayer;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface UserPlayerRepository extends JpaRepository<UserPlayer, Long> {
-    List<UserPlayer> findByUserName(String userName);
-
-    List<UserPlayer> findByEmail(String email);
+    Optional<UserPlayer> findByEmail(String username);
 }

@@ -1,18 +1,14 @@
 package org.example.rivalry.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.example.rivalry.dto.UserPlayerAuthResponseDto;
-import org.example.rivalry.dto.UserPlayerResponseDto;
+import org.example.rivalry.dto.UserDto;
+import org.example.rivalry.dto.UserPublicDto;
 import org.example.rivalry.enums.Roles;
 
-import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
@@ -25,11 +21,14 @@ import java.time.format.DateTimeFormatter;
 public class UserPlayer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long id_user;
 
     private String firstName;
     private String lastName;
+
+    @Column(unique = true)
     private String email;
+
     private String username;
     private String password;
 
@@ -39,26 +38,30 @@ public class UserPlayer {
     private Roles role;
     private String avatar;
 
-    public UserPlayerResponseDto entityToPublicDto() {
-        return UserPlayerResponseDto.builder()
+    public UserPlayer(String email, String username, String password, int role) {
+        this.email = email;
+        this.username = username;
+        this.password = password;
+        this.role = role == 0 ? Roles.PLAYER : Roles.ADMIN;
+    }
+
+    public UserDto entityToDto (){
+        return UserDto.builder()
+                .id(getId_user())
+                .email(getEmail())
+                .firstName(getFirstName())
+                .lastName(getLastName())
                 .username(getUsername())
                 .avatar(getAvatar())
+                .dateOfBirth(getDateOfBirth().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")))
+                .dateOfCreation(getDateOfCreation().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")))
                 .build();
     }
 
-    public UserPlayerAuthResponseDto entityToDto() {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-
-        return UserPlayerAuthResponseDto.builder()
+    public UserPublicDto entityToPublicDto (){
+        return UserPublicDto.builder()
                 .username(getUsername())
                 .avatar(getAvatar())
-                .firstName(getLastName())
-                .lastName(getFirstName())
-                .username(getUsername())
-                .email(getEmail())
-                .dateOfBirth(getDateOfBirth().format(formatter))
-                .dateOfCreation(getDateOfCreation().format(formatter))
-                .role(getRole().toString())
                 .build();
     }
 }
