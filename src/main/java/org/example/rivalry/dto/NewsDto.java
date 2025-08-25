@@ -1,49 +1,39 @@
-package org.example.rivalry.entity;
+package org.example.rivalry.dto;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.example.rivalry.dto.NewsDto;
-import org.example.rivalry.enums.Roles;
+import org.example.rivalry.entity.Game;
+import org.example.rivalry.entity.News;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-
-@Entity
 
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @Data
-public class News {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
+@Builder
+public class NewsDto {
     private String name;
     private String preamble;
     private String text;
     private String image;
 
-    private LocalDate date;
+    private String date;
 
     private Boolean isActive;
 
-    public NewsDto entityToDto () {
+    public News dtoToEntity () {
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
-        return NewsDto.builder()
+        return News.builder()
                 .name(getName())
                 .preamble(getPreamble())
                 .text(getText())
                 .image(getImage())
-                .date(getDate().format(DateTimeFormatter.ofPattern("dd-MM-yyyy")))
+                .date(LocalDate.parse(getDate(),dateTimeFormatter))
                 .isActive(getIsActive())
                 .build();
     }
+
 }
